@@ -1,8 +1,7 @@
 // import "solana";
 
 // SPL Token Minter Program Interface
-// splTokenMinterInterface constant splTokenMinterProgram = splTokenMinterInterface(address'543xjVFqEUnvU7HkgRUxWSi7VNvRmtQ3xfaZN9557Xhb');
-
+// splTokenMinterInterface constant splTokenMinterProgram = splTokenMinterInterface(address'543xjVFqEUnvU7HkgRUxWSi7VNvRmtQ3xfaZN9557Xhb')
 // Interface for the spl_token_minter program
 // interface splTokenMinterInterface {
 //     function transferTokens(address from, address to, uint64 amount) external;

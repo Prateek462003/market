@@ -22,6 +22,8 @@ describe("prediction-market", () => {
   anchor.setProvider(provider);
 
   const dataAccount = anchor.web3.Keypair.generate();
+  const splDataAccount = anchor.web3.Keypair.generate();
+
   const wallet = provider.wallet as anchor.Wallet;
   const connection = provider.connection;
 
@@ -59,13 +61,23 @@ describe("prediction-market", () => {
     const programId = program.programId;
     console.log("Program ID:", programId.toString());
 
-     contractTokenAccount = await getOrCreateAssociatedTokenAccount(
-      connection,
-      wallet.payer, // payer
-      mintKeypair.publicKey, // mint
-      wallet.publicKey // owner
-    );
+    //  contractTokenAccount = await getOrCreateAssociatedTokenAccount(
+    //   connection,
+    //   wallet.payer, // payer
+    //   mintKeypair.publicKey, // mint
+    //   wallet.publicKey // owner
+    // );
 
+  });
+
+  it("SPL Is initialized!", async () => {
+    // Add your test here.
+    const tx = await splProgram.methods
+      .new()
+      .accounts({ dataAccount: splDataAccount.publicKey })
+      .signers([splDataAccount])
+      .rpc();
+    console.log("Your transaction signature", tx);
   });
 
   it("Can buy shares correctly", async () => { 

@@ -78,7 +78,7 @@
 import "../libraries/spl_token.sol";
 import "../libraries/mpl_metadata.sol";
 
-@program_id("543xjVFqEUnvU7HkgRUxWSi7VNvRmtQ3xfaZN9557Xhb")
+@program_id("CieVokNRiDCXRPF6yMNFwzJf3kNebefw3GwbxmS6sGTL")
 contract spl_token_minter {
     @payer(payer)
     constructor() {}

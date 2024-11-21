@@ -178,7 +178,7 @@ contract spl_token_minter {
     // Transfer tokens from one token account to another via Cross Program Invocation to Token Program
     @mutableAccount(from) // token account to transfer from
     @mutableAccount(to) // token account to transfer to
-    @signer(owner)
+    @mutableSigner(owner)
     function transferTokens(
         uint64 amount // amount to transfer
     ) external {

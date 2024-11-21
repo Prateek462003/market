@@ -5,7 +5,7 @@ import { BN } from "@coral-xyz/anchor";
 import { expect } from "chai";
 import { SplTokenMinter } from "../target/types/spl_token_minter";
 import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY, LAMPORTS_PER_SOL } from "@solana/web3.js";
-import { Metaplex } from "@metaplex-foundation/js";
+import { amount, Metaplex } from "@metaplex-foundation/js";
 import { assert } from "chai";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -20,26 +20,32 @@ describe("prediction-market and token usage", () => {
   // Configure the client to use the local cluster.
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
-
+  
   const dataAccount = anchor.web3.Keypair.generate();
   const splDataAccount = anchor.web3.Keypair.generate();
   const mintKeypair = anchor.web3.Keypair.generate();
-
+  
   const wallet = provider.wallet as anchor.Wallet;
   const connection = provider.connection;
-
+  
   const program = anchor.workspace.PredictionMarket as Program<PredictionMarket>;
   const splProgram = anchor.workspace.SplTokenMinter as Program<SplTokenMinter>;
-
+  
   const tokenTitle = "BullsUSDC";
   const tokenSymbol = "USDC";
   const tokenUri =
-    "https://res.cloudinary.com/ddwkxn8ak/image/upload/v1698823073/solangsol/Course1_mhz1c1.png";
-
+  "https://res.cloudinary.com/ddwkxn8ak/image/upload/v1698823073/solangsol/Course1_mhz1c1.png";
+  
   let contractTokenAccount;
   let tokenAccount;
   let recepienttokenAmount;
-
+  
+  async function getRecipientTokenAmount() {
+    // Assuming getAccount and receipientTokenAccount are defined elsewhere
+    const recipientTokenAccount = await getAccount(connection, recepienttokenAmount.address);
+    const amount = recipientTokenAccount.amount;
+    return amount;
+  }
   it("Initializes the contract correctly", async () => {
     const description = "US Elections";
     const optionNames = ["donald", "kamla"];
@@ -145,28 +151,6 @@ describe("prediction-market and token usage", () => {
 
 
 
-async function getRecipientTokenAmount() {
-  // Assuming getAccount and receipientTokenAccount are defined elsewhere
-  const recipientTokenAccount = await getAccount(connection, recepienttokenAmount.address);
-  const amount = recipientTokenAccount.amount;
-  return amount;
-}
-
-// (async () => {
-//   try {
-//     const amount = await getRecipientTokenAmount();
-//     console.log("Recipient token amount:", amount);
-//     let tokens = Number(amount);
-//     assert.equal(tokens / LAMPORTS_PER_SOL, 54);
-//   } catch (error) {
-//     console.error("Error:", error);
-//   }
-// })();
-
-  // const recepienttokenAmount = await getAccount(connection, receipientTokenAccount.address).amount;
-  // console.log("recipienttokenAmount", recepienttokenAmount);
-  // let tokens = Number(recepienttokenAmount);
-  // assert.equal(tokens / LAMPORTS_PER_SOL, 54);
 
   it("Transfer some tokens to another wallet!", async () => {
 
@@ -287,6 +271,67 @@ async function getRecipientTokenAmount() {
     // Ensure that the user's shares for the selected option have been reduced correctly
     expect(userSharesAfter.toString()).to.equal((
       userSharesBefore.toNumber() - sellAmount.toNumber()).toString() // Shares should decrease by the sell amount
+    );
+  });
+
+  it("Creates a token account from contract's program ID and transfers tokens", async () => {
+    // 1. Create associated token account for the contract's program ID
+    contractTokenAccount = await getOrCreateAssociatedTokenAccount(
+      connection,
+      wallet.payer, // payer
+      mintKeypair.publicKey, // mint key
+      program.programId // owner
+    );
+
+    console.log("Contract Token Account:", contractTokenAccount);
+
+    // 2. Create a sender's associated token account (simulating the sender's account)
+    const sender = anchor.web3.Keypair.generate();
+    const senderTokenAccount = await getOrCreateAssociatedTokenAccount(
+      connection,
+      wallet.payer, // payer
+      mintKeypair.publicKey, // mint key
+      sender.publicKey // owner (this could be another wallet in a real case)
+    );
+
+    console.log("Sender Token Account:", senderTokenAccount);
+
+    // 3. Mint some tokens to the sender's account
+    const txMint = await splProgram.methods
+      .mintTo(new anchor.BN(200)) // Mint 200 tokens
+      .accounts({
+        mintAuthority: wallet.publicKey,
+        tokenAccount: senderTokenAccount.address,
+        mint: mintKeypair.publicKey,
+      })
+      .rpc({ skipPreflight: true });
+
+    console.log("Mint transaction signature:", txMint);
+
+    // 5. Transfer tokens from the sender's token account to the recipient's token account
+    const amountToTransfer = new anchor.BN(50)
+    const txTransfer = await splProgram.methods
+      .transferTokens(amountToTransfer) // Amount to transfer
+      .accounts({
+        from: senderTokenAccount.address,
+        to: contractTokenAccount.address,
+        owner: sender.publicKey,
+      })
+      .signers([sender])
+      .rpc();
+
+    console.log("Token transfer transaction signature:", txTransfer);
+
+    // 6. Check recipient's token amount after transfer
+    const contractTokenAccountData = await getAccount(connection, contractTokenAccount.address);
+    const recipientAmount = contractTokenAccountData.amount;
+    console.log("Recipient token amount after transfer:", recipientAmount.toString());
+
+    // 7. Validate the transfer
+    assert.equal(
+      recipientAmount.toString(),
+      amountToTransfer.toString(),
+      "The recipient's token balance should match the transferred amount."
     );
   });
 

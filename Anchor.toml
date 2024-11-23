@@ -2,8 +2,8 @@
 seeds = false
 skip-lint = false
 [programs.devnet]
-prediction_market = "BWA61yMRz3bmhvAo7ZKVEcp38cXuBBcnVDpPQx5hMCoY"
-spl_minter = "CieVokNRiDCXRPF6yMNFwzJf3kNebefw3GwbxmS6sGTL"
+prediction_market = "aikiSUtSCAnjnQe5TVyhKX33bMABjzFDzixPVP6B6AA"
+spl_minter = "7Lqrekxb2ng3BRU5q4h4JJSCDqZs7ATBMimSYAJLJwEs"
 
 [registry]
 url = "https://api.apr.dev"
